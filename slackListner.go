@@ -22,7 +22,7 @@ const (
 )
 
 // "ListenAndResponse method respond to event changes on slack channel"
-func (s *SlackListener) ListenAndResponse() {
+func (s *SlackListener) ListenAndResponse(dbConnection dbAccess) {
 	rtm := s.api.NewRTM()
 
 	// Start listening slack events
@@ -32,15 +32,15 @@ func (s *SlackListener) ListenAndResponse() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
-			if err := s.handleMessageEvent(ev); err != nil {
+			if err := s.handleMessageEvent(ev, dbConnection); err != nil {
 				fmt.Printf("[ERROR] Failed to handle message: %s", err)
 			}
 		}
 	}
 }
 
-func (s *SlackListener) handleMessageEvent(ev *slack.MessageEvent) error {
-	fmt.Println(ev.Msg.Text, s.botID)
+func (s *SlackListener) handleMessageEvent(ev *slack.MessageEvent, dbConnection dbAccess) error {
+	dbConnection.getListofCommands()
 	// make sure the BOT ID is mentioned
 	if !strings.HasPrefix(ev.Msg.Text, fmt.Sprintf("<@%s> ", s.botID)) {
 		fmt.Println(ev.Msg.Text)
