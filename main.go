@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/kelseyhightower/envconfig"
@@ -46,6 +45,8 @@ func main() {
 		conString: getConnectionString(env),
 	}
 
+	dbConnection.prepareDatabase()
+
 	slackListener := &SlackListener{
 		api:       api,
 		botID:     env.BotID,
@@ -54,7 +55,7 @@ func main() {
 
 	//start listening to events on the slack channel and pass the dbconnection struct
 	// to be used later when we want to make connection to database
-	go slackListener.ListenAndResponse(dbConnection)
+	go slackListener.ListenAndResponse(&dbConnection)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/learnAmharic", learnAmharic)
@@ -80,11 +81,6 @@ func learnAmharic(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		fmt.Println("The marshallong has some issue")
 	}
-	buf, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("This is the message from the slack ", string(buf))
 	writer.WriteHeader(http.StatusOK)
 	writer.Header().Set("Content-Type", "text/plain")
 	writer.Write([]byte(slackMessage.Challenge))
